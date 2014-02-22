@@ -1,6 +1,5 @@
 """ Pae.st server """
 from base58 import BASE58_REGEX
-from redisdb import RedisDB 
 import tornado.ioloop
 from tornado.options import define, options
 from tornado.web import RequestHandler
@@ -74,12 +73,15 @@ def main():
     
     def use_redis():
         """ Configure and return a RedisDB instance """
+        # pylint reimport warning bug
+        # pylint: disable=W0404
+        from redisdb import RedisDB 
         return RedisDB(host=options.redis_host,
                        port=options.redis_port, 
                        db=options.redis_db)
     paestdb = {
         "redis":use_redis
-    }.get(options.backend)
+    }.get(options.backend)()
     
     if paestdb is None:
         print "Backend unavailable. Exiting."
