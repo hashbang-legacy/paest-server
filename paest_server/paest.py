@@ -92,7 +92,7 @@ def main():
     # /<paest id>
     # /<paest id>/
     # /<paest id>/<paest key>
-    pattern = r"^/?({0}+)/?({0}*)".format(BASE58_REGEX)
+    pattern = r"^/?({0}*)/?({0}*)".format(BASE58_REGEX)
 
     application = tornado.web.Application([
         (pattern, PaestServer, {'paestdb':paestdb}),
