@@ -8,6 +8,10 @@ from tornado.web import RequestHandler
 
 class PaestServer(RequestHandler):
     """ Paest request handler """
+
+    def set_default_headers(self):
+        self.set_header("Access-Control-Allow-Origin","*")
+
     # Tornado uses argument unpacking
     # pylint: disable=W0221
     def initialize(self, paestdb):
