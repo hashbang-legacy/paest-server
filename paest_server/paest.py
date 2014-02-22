@@ -32,7 +32,7 @@ class PaestServer(RequestHandler):
 
     def post(self, p_id, p_key):
         req = self.request
-        post_contents = req.body_arguments.values()
+        post_contents = req.arguments.values()
         #      argument names             value list
         if len(post_contents) != 1 or len(post_contents[0]) != 1:
             self.write("Invalid POST")
