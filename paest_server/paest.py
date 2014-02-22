@@ -49,14 +49,19 @@ class PaestServer(RequestHandler):
         else: # We have content, it's a create/update
             if p_key: # We have a key, it's an update     
                 self.paestdb.update_paest(p_id, p_key, content)
-                self.write("Paest updated")
             else:
                 paest = self.paestdb.create_paest(p_id, p_key, content)
+                p_id = paest.pid
+                p_key = paest.key
                 if not paest: # Woah. We couldn't find a free ID
                     self.write("Paest failed.")
                     return
-                self.write("Paest created. {} {}".format(paest.pid, paest.key))
-                    
+            self.write(("#Fragments(#) not required in url:\n"
+                        "http://a.pae.st/{PID}#CLI-PUBLIC\n"
+                        "http://a.pae.st/{PID}/{KEY}#CLI-PRIVATE\n"
+                        "http://pae.st/{PID}#WEB-PUBLIC\n"
+                        "http://pae.st/{PID}/{KEY}#WEB-PRIVATE\n"
+                        ).format(PID=p_id, KEY=p_key))
 def main():
     """ Define routing, and start the server """
     # Setup Tornado
