@@ -1,7 +1,6 @@
 """ Pae.st server """
 from base58 import BASE58_REGEX
 import tornado.ioloop
-from tornado.log import access_log
 from tornado.options import define, options
 from tornado.web import RequestHandler
 from json import dumps
@@ -20,6 +19,13 @@ class Response:
             # Raw formats should have exactly 1 arg
             assert(len(args)==1)
             return args.values()[0]
+
+    @staticmethod
+    def content_type(rtype):
+        """ Paest was not found in backend """
+        if rtype == ".json":
+            return "application/json"
+        return "text/plain"
 
     @staticmethod
     def not_found(rtype):
@@ -63,7 +69,7 @@ class Response:
             "cli_pri": "http://a.pae.st/{}/{}".format(p_id, p_key)
         }
 
-        if rtype==".json":
+        if rtype == ".json":
             return Response._format(rtype, **urls)
         else:
             return ("#Fragments(#) not required in url:\n"
@@ -90,6 +96,7 @@ class PaestServer(RequestHandler):
     def get(self, p_id, p_key, rtype):
         # p_key is not used during get requests
         # pylint: disable=W0613
+        self.set_header("Content-Type", Response.content_type(rtype))
 
         paest = self.paestdb.get_paest(p_id)
         if paest is None:
@@ -98,6 +105,7 @@ class PaestServer(RequestHandler):
             self.write(Response.raw(rtype, paest.content))
 
     def post(self, p_id, p_key, rtype):
+        self.set_header("Content-Type", Response.content_type(rtype))
 
         req = self.request
         post_contents = req.arguments.values()
