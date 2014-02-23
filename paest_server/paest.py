@@ -22,7 +22,7 @@ class PaestServer(RequestHandler):
 
     def get(self, p_id, p_key):
         # p_key is not used during get requests
-        # pylint: disable=W0613 
+        # pylint: disable=W0613
 
         paest = self.paestdb.get_paest(p_id)
         if paest is None:
@@ -47,7 +47,7 @@ class PaestServer(RequestHandler):
                 self.write("Paest deleted")
             return
         else: # We have content, it's a create/update
-            if p_key: # We have a key, it's an update     
+            if p_key: # We have a key, it's an update
                 self.paestdb.update_paest(p_id, p_key, content)
             else:
                 paest = self.paestdb.create_paest(p_id, p_key, content)
@@ -65,38 +65,38 @@ class PaestServer(RequestHandler):
 
 def setup_options():
     """ Set up all of the flags for paest (and possible backends) """
-    # Various engines in paest. 
-    define("backend", default="redis", help="Which backend to use", 
+    # Various engines in paest.
+    define("backend", default="redis", help="Which backend to use",
         group="paest")
-    define("throttler", default="redis", help="Which throttler to use", 
+    define("throttler", default="redis", help="Which throttler to use",
         group="paest")
 
     # Setup Tornado Server options
-    define("tornado_port", default=80, help="Port to host web server on", 
+    define("tornado_port", default=80, help="Port to host web server on",
             group="tornado")
-   
+
     # Redis options
-    define("redis_host", default="localhost", help="Redis server host", 
+    define("redis_host", default="localhost", help="Redis server host",
             group="redis")
     define("redis_port", default=6379, help="Redis server port", group="redis")
     define("redis_db", default=0, help="Redis DB to use", group="redis")
 
     options.parse_command_line()
- 
+
 def get_db():
     """ Get (and configure) a paest db backend """
     def use_redis():
         """ Configure and return a RedisDB instance """
         # pylint reimport warning bug
         # pylint: disable=W0404
-        from redisdb import RedisDB 
+        from redisdb import RedisDB
         return RedisDB(host=options.redis_host,
-                       port=options.redis_port, 
+                       port=options.redis_port,
                        db=options.redis_db)
     # def use_someOtherDB():
     #   import your code
     #   create your client
-    
+
     return {
         "redis":use_redis
         # Add your backend flag here. (Add your options in setup_options)
@@ -114,9 +114,9 @@ def get_throttler():
 
 def main():
     """ Define routing, and start the server """
-    setup_options()   
+    setup_options()
     paestdb = get_db()
-  
+
     if paestdb is None:
         print "Backend unavailable. Exiting."
         exit(1)
@@ -135,7 +135,7 @@ def main():
     application = tornado.web.Application([
         (pattern, PaestServer, {'paestdb':paestdb}),
     ])
-    
+
     application.listen(options.tornado_port)
     tornado.ioloop.IOLoop.instance().start()
 
