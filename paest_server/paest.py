@@ -1,9 +1,76 @@
 """ Pae.st server """
 from base58 import BASE58_REGEX
 import tornado.ioloop
+from tornado.log import access_log
 from tornado.options import define, options
 from tornado.web import RequestHandler
+from json import dumps
 
+class Response:
+    """ Resource for the paest responses """
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def _format(fmt, **args):
+        """ Format the error messages to json or raw """
+        if fmt == ".json":
+            return dumps(args)
+        else:
+            # Raw formats should have exactly 1 arg
+            assert(len(args)==1)
+            return args.values()[0]
+
+    @staticmethod
+    def not_found(rtype):
+        """ Paest was not found in backend """
+        return Response._format(rtype, e="paest not found")
+
+    @staticmethod
+    def invalid_post(rtype):
+        """ POST content was invalid """
+        return Response._format(rtype, e="invalid post")
+
+    @staticmethod
+    def bad_id_or_key(rtype):
+        """ Returning a raw block of data """
+        return Response._format(rtype, e="bad id or key")
+
+    @staticmethod
+    def paest_deleted(rtype):
+        """ Returning a raw block of data """
+        return Response._format(rtype, e="paest deleted")
+
+    @staticmethod
+    def raw(rtype, data):
+        """ Returning a raw block of data """
+        return Response._format(rtype, d=data)
+
+    @staticmethod
+    def paest_failed(rtype):
+        """ Creating a paest failed. """
+        return Response._format(rtype, e="Paest Failed")
+
+    @staticmethod
+    def paest_links(rtype, p_id, p_key):
+        """ Response for update/create calls """
+        # Using **, I could probably fix this, but I don't wanna!
+        # pylint: disable=W0142
+        urls = {
+            "web_pub": "http://pae.st/{}".format(p_id),
+            "web_pri": "http://pae.st/{}/{}".format(p_id, p_key),
+            "cli_pub": "http://a.pae.st/{}".format(p_id),
+            "cli_pri": "http://a.pae.st/{}/{}".format(p_id, p_key)
+        }
+
+        if rtype==".json":
+            return Response._format(rtype, **urls)
+        else:
+            return ("#Fragments(#) not required in url:\n"
+                    "{cli_pub}#CLI-PUBLIC\n"
+                    "{cli_pri}#CLI-PRIVATE\n"
+                    "{web_pub}#WEB-PUBLIC\n"
+                    "{web_pri}#WEB-PRIVATE\n").format(**urls)
 
 class PaestServer(RequestHandler):
     """ Paest request handler """
@@ -20,31 +87,32 @@ class PaestServer(RequestHandler):
 
         self.put = self.post
 
-    def get(self, p_id, p_key):
+    def get(self, p_id, p_key, rtype):
         # p_key is not used during get requests
         # pylint: disable=W0613
 
         paest = self.paestdb.get_paest(p_id)
         if paest is None:
-            self.write("Paest not found")
+            self.write(Response.not_found(rtype))
         else:
-            self.write(paest.content)
+            self.write(Response.raw(rtype, paest.content))
 
-    def post(self, p_id, p_key):
+    def post(self, p_id, p_key, rtype):
+
         req = self.request
         post_contents = req.arguments.values()
         #      argument names             value list
         if len(post_contents) != 1 or len(post_contents[0]) != 1:
-            self.write("Invalid POST")
+            self.write(Response.invalid_post(rtype))
             return
 
         content = post_contents[0][0]
 
         if not content: # Empty paest, treat as delete
             if self.paestdb.delete_paest(p_id, p_key):
-                self.write("Bad paest id or key")
+                self.write(Response.bad_id_or_key(rtype))
             else:
-                self.write("Paest deleted")
+                self.write(Response.paest_deleted(rtype))
             return
         else: # We have content, it's a create/update
             if p_key: # We have a key, it's an update
@@ -54,14 +122,9 @@ class PaestServer(RequestHandler):
                 p_id = paest.pid
                 p_key = paest.key
                 if not paest: # Woah. We couldn't find a free ID
-                    self.write("Paest failed.")
+                    self.write(Response.paest_failed(rtype))
                     return
-            self.write(("#Fragments(#) not required in url:\n"
-                        "http://a.pae.st/{PID}#CLI-PUBLIC\n"
-                        "http://a.pae.st/{PID}/{KEY}#CLI-PRIVATE\n"
-                        "http://pae.st/{PID}#WEB-PUBLIC\n"
-                        "http://pae.st/{PID}/{KEY}#WEB-PRIVATE\n"
-                        ).format(PID=p_id, KEY=p_key))
+            self.write(Response.paest_links(rtype, p_id, p_key))
 
 def setup_options():
     """ Set up all of the flags for paest (and possible backends) """
@@ -130,7 +193,7 @@ def main():
     # /<paest id>
     # /<paest id>/
     # /<paest id>/<paest key>
-    pattern = r"^/?({0}*)/?({0}*)".format(BASE58_REGEX)
+    pattern = r"^/?({0}*)/?({0}*)(\.json)?".format(BASE58_REGEX)
 
     application = tornado.web.Application([
         (pattern, PaestServer, {'paestdb':paestdb}),
