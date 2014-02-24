@@ -1,16 +1,21 @@
 """ Redis backend for peast """
+import random
 import redis
-from paestdb import PaestDB, Paest
-from base58 import random58
-
+from . import PaestDB, Paest
 _WEEK = 7 * 24 * 60 * 60 # 1 Week in seconds
+
+# Base 58 utils
+BASE58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+def random58(length):
+    """ Construct a random BASE58 string the given length """
+    chars = [random.choice(BASE58) for _ in xrange(length)]
+    return "".join(chars)
 
 class RedisDB(PaestDB):
     """ A PaestDB that uses Redis as the backing implementation """
 
     def __init__(self, ttl=_WEEK, *args, **kwargs):
         super(RedisDB, self).__init__()
-
         self.client = redis.StrictRedis(*args, **kwargs)
         self.expire_time = ttl
 

@@ -164,7 +164,7 @@ def get_db():
         """ Configure and return a RedisDB instance """
         # pylint reimport warning bug
         # pylint: disable=W0404
-        from redisdb import RedisDB
+        from backends.redisimpl import RedisDB
         return RedisDB(host=options.redis_host,
                        port=options.redis_port,
                        db=options.redis_db)
@@ -183,7 +183,7 @@ def get_throttler():
         """ Configure and return a RedisThrottler """
         # pylint reimport warning bug
         # pylint: disable=W0404
-        from redisthrottler import RedisThrottler
+        from throttling.redisimpl import RedisThrottler
         return RedisThrottler(host=options.redis_host,
                               port=options.redis_port,
                               db=options.redis_db)

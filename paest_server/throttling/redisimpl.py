@@ -1,8 +1,8 @@
 """ Throttling service for pae.st backed by redis """
-from paestthrottler import PaestThrottler
 import redis
 import time
-class RedisThrottler(PaestThrottler):
+from . import Throttler
+class RedisThrottler(Throttler):
     """ A PaestThrottler implemented in redis """
 
     def __init__(self, *args, **kwargs):

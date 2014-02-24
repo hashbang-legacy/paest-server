@@ -8,10 +8,11 @@ class Paest(object):
         self.key = key
         self.content = content
 
+
 # Used by RedisDB
 # pylint: disable=R0921
 class PaestDB(object):
-    """ An abstraction of the backend 
+    """ An abstraction of the backend
     allows for replacement backends (including mocks and fakes)
     """
 
@@ -25,7 +26,7 @@ class PaestDB(object):
             Returns Paest is paest created.
         """
         raise NotImplementedError("create_paest not defined")
-        
+
     def get_paest(self, pid):
         """ Fetch a paest by id
             Returns None if no paest found
@@ -39,7 +40,7 @@ class PaestDB(object):
             Returns False otherwise
         """
         raise NotImplementedError("updatePaest not defined")
-    
+
     def delete_paest(self, pid, pkey):
         """ Deletes a paest
             Returns True if deletion was successful
