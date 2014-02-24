@@ -14,6 +14,8 @@ class Response:
         """ Format the error messages to json or raw """
         if fmt == ".json":
             return dumps(args)
+        elif fmt.startswith("jsonp"):
+            return "{}({})".format(fmt.split("=")[1], dumps(args))
         else:
             # Raw formats should have exactly 1 arg
             assert(len(args)==1)
@@ -24,6 +26,8 @@ class Response:
         """ Paest was not found in backend """
         if rtype == ".json":
             return "application/json"
+        elif rtype.startswith("jsonp"):
+            return "application/javascript"
         return "text/plain"
 
     @staticmethod
@@ -68,7 +72,7 @@ class Response:
             "cli_pri": "http://a.pae.st/{}/{}".format(p_id, p_key)
         }
 
-        if rtype == ".json":
+        if rtype != "":
             return Response._format(rtype, **urls)
         else:
             return ("#Fragments(#) not required in url:\n"
@@ -97,6 +101,8 @@ class PaestServer(RequestHandler):
         # pylint: disable=W0613
         if self.throttler and self.throttler.reject(self.request):
             raise tornado.web.HTTPError(403)
+        if self.request.query.startswith("jsonp="):
+            rtype = self.request.query
 
         self.set_header("Content-Type", Response.content_type(rtype))
         paest = self.paestdb.get_paest(p_id)
@@ -108,6 +114,8 @@ class PaestServer(RequestHandler):
     def post(self, p_id, p_key, rtype):
         if self.throttler and self.throttler.reject(self.request):
             raise tornado.web.HTTPError(403)
+        if self.request.query.startswith("jsonp="):
+            rtype = self.request.query
         self.set_header("Content-Type", Response.content_type(rtype))
 
         content = ""
