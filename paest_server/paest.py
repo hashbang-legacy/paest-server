@@ -1,5 +1,4 @@
 """ Pae.st server """
-from base58 import BASE58_REGEX
 import tornado.ioloop
 from tornado.options import define, options
 from tornado.web import RequestHandler
@@ -207,11 +206,11 @@ def main():
         print "Throttling unavailable. Continuing"
 
 
-    # Build the matcher. (<paest id> and <paest key> are base58 strings)
+    # Build the matcher.
     # /<paest id>
     # /<paest id>/
     # /<paest id>/<paest key>
-    pattern = r"^/?({0}*)/?({0}*)(\.json)?".format(BASE58_REGEX)
+    pattern = r"^/?({0}*)/?({0}*)(\.json)?".format("\w")
 
     application = tornado.web.Application([
         (pattern, PaestServer, {'paestdb':paestdb, 'throttler':throttler}),
