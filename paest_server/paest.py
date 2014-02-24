@@ -86,18 +86,20 @@ class PaestServer(RequestHandler):
 
     # Tornado uses argument unpacking
     # pylint: disable=W0221
-    def initialize(self, paestdb):
+    def initialize(self, paestdb, throttler):
         # Tornado uses initialize instead of __init__
         # pylint: disable=W0201
         self.paestdb = paestdb
-
+        self.throttler = throttler
         self.put = self.post
 
     def get(self, p_id, p_key, rtype):
         # p_key is not used during get requests
         # pylint: disable=W0613
-        self.set_header("Content-Type", Response.content_type(rtype))
+        if self.throttler and self.throttler.reject(self.request):
+            raise tornado.web.HTTPError(403)
 
+        self.set_header("Content-Type", Response.content_type(rtype))
         paest = self.paestdb.get_paest(p_id)
         if paest is None:
             self.write(Response.not_found(rtype))
@@ -105,6 +107,9 @@ class PaestServer(RequestHandler):
             self.write(Response.raw(rtype, paest.content))
 
     def post(self, p_id, p_key, rtype):
+        if self.throttler and self.throttler.reject(self.request):
+            raise tornado.web.HTTPError(403)
+
         self.set_header("Content-Type", Response.content_type(rtype))
 
         req = self.request
@@ -177,7 +182,12 @@ def get_throttler():
     """ Get a throttling backend """
     def use_redis():
         """ Configure and return a RedisThrottler """
-        return None # TODO(snail): Implement throttling backend
+        # pylint reimport warning bug
+        # pylint: disable=W0404
+        from redisthrottler import RedisThrottler
+        return RedisThrottler(host=options.redis_host,
+                              port=options.redis_port,
+                              db=options.redis_db)
 
     return {
         "redis":use_redis
@@ -204,7 +214,7 @@ def main():
     pattern = r"^/?({0}*)/?({0}*)(\.json)?".format(BASE58_REGEX)
 
     application = tornado.web.Application([
-        (pattern, PaestServer, {'paestdb':paestdb}),
+        (pattern, PaestServer, {'paestdb':paestdb, 'throttler':throttler}),
     ])
 
     application.listen(options.tornado_port)
