@@ -218,7 +218,7 @@ def main():
     # /<paest id>
     # /<paest id>/
     # /<paest id>/<paest key>
-    pattern = r"^/?({0}*)/?({0}*)(\.json)?".format("\w")
+    pattern = r"^/?({0}*)/?({0}*)(\.json|)".format("\w")
 
     application = tornado.web.Application([
         (pattern, PaestServer, {'paestdb':paestdb, 'throttler':throttler}),
