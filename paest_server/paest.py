@@ -135,16 +135,21 @@ class PaestServer(RequestHandler):
                 self.write(Response.paest_deleted(rtype))
             return
         else: # We have content, it's a create/update
-            if p_key: # We have a key, it's an update
-                self.paestdb.update_paest(p_id, p_key, content)
+
+            paest = None
+            if p_key:
+                # paest updated.
+                paest = self.paestdb.update_paest(p_id, p_key, content)
             else:
                 paest = self.paestdb.create_paest(p_id, p_key, content)
-                p_id = paest.pid
-                p_key = paest.key
-                if not paest: # Woah. We couldn't find a free ID
-                    self.write(Response.paest_failed(rtype))
-                    return
-            self.write(Response.paest_links(rtype, p_id, p_key))
+                if paest:
+                    p_id = paest.pid
+                    p_key = paest.key
+
+            if paest:
+                self.write(Response.paest_links(rtype, p_id, p_key))
+            else:
+                self.write(Response.paest_failed(rtype))
 
 def setup_options():
     """ Set up all of the flags for paest (and possible backends) """
