@@ -109,17 +109,17 @@ class PaestServer(RequestHandler):
     def post(self, p_id, p_key, rtype):
         if self.throttler and self.throttler.reject(self.request):
             raise tornado.web.HTTPError(403)
-
         self.set_header("Content-Type", Response.content_type(rtype))
 
-        req = self.request
-        post_contents = req.arguments.values()
-        #      argument names             value list
-        if len(post_contents) != 1 or len(post_contents[0]) != 1:
+        content = ""
+        if len(self.request.arguments.keys()) == 1:
+            content = self.request.arguments.values()[0][0]
+        elif len(self.request.files.keys()) == 1:
+            content = self.request.files.values()[0][0]['body']
+        else:
             self.write(Response.invalid_post(rtype))
             return
 
-        content = post_contents[0][0]
 
         if not content: # Empty paest, treat as delete
             if self.paestdb.delete_paest(p_id, p_key):
