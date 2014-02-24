@@ -12,37 +12,37 @@ class RedisDB(PaestDB):
         super(RedisDB, self).__init__()
 
         self.client = redis.StrictRedis(*args, **kwargs)
-        self.expire_time = ttl 
-    
+        self.expire_time = ttl
+
     @staticmethod
     def redis_id(pid):
         """ Turn a paest id to a redis key """
         return "paest:{}".format(pid)
-    
+
     @staticmethod
     def serialize(key, content):
         """ Searialize a paests key and content to a redis entry """
         return "{}:{}".format(key, content)
-    
+
     @staticmethod
     def unserialize(content):
         """ Break a redis entry into the paests key and content """
         return content.split(":", 1)
 
     def create_paest(self, p_id, p_key, content):
-        
+
         # Validate the key
         if not p_key:
             p_key = random58(20)
         else:
             # Check that we can serialize/unserialize with it
             ret = self.unserialize(self.serialize(p_key, "content"))
-            if ret != [p_key, "content"]: 
+            if ret != [p_key, "content"]:
                 p_key = random58(20)
-        
+
         # No id requested, or it's in use
         if (not p_id) or self.get_paest(p_id):
-            # Find a new id for them. 
+            # Find a new id for them.
             for length in xrange(10):
                 p_id = random58(length) # Try a paestid of length 1, then 2, etc
                 paest = self.get_paest(p_id)
@@ -52,7 +52,7 @@ class RedisDB(PaestDB):
             else: # We didn't break. That means no luck on a paest id
                 return None
 
-        # If we get here, we have an unused p_id and a valid p_key! 
+        # If we get here, we have an unused p_id and a valid p_key!
         self.client.set(self.redis_id(p_id), self.serialize(p_key, content))
         self.client.expire(self.redis_id(p_id), self.expire_time)
         return Paest(p_id, p_key, content)
@@ -62,6 +62,7 @@ class RedisDB(PaestDB):
         if entry is None:
             return None
         key, content = self.unserialize(entry)
+        self.client.expire(self.redis_id(pid), self.expire_time)
         return Paest(pid, key, content)
 
     def update_paest(self, pid, key, content):
@@ -79,7 +80,7 @@ class RedisDB(PaestDB):
 
         if paest is None or paest.key != key:
             return False
-        
+
         self.client.delete(self.redis_id(pid))
         return True
 
