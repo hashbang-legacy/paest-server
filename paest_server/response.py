@@ -45,7 +45,7 @@ class Jsonp(Json):
         """ Format the args into a jsonp callback """
         return "{}({})".format(
             self.callback,
-            super(Jsonp, self).format(arg_dict))
+            super(Jsonp, self).format(**arg_dict))
 
     def content_type(self):
         """ Content type for jsonp """
@@ -55,7 +55,7 @@ class Response:
     """ Resource for the paest responses """
     def __init__(self, request):
         if request.arguments.has_key("callback"):
-            fmt = Jsonp(request.query.arguments["callback"])
+            fmt = Jsonp(request.arguments["callback"][0])
         elif request.path.endswith(".json"):
             fmt = Json()
         else:
