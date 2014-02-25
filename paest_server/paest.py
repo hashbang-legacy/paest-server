@@ -143,7 +143,11 @@ def main():
     if throttler is None:
         print "Throttling unavailable. Continuing"
 
+    application = get_paest_application(paestdb, throttler)
+    application.listen(options.tornado_port)
+    tornado.ioloop.IOLoop.instance().start()
 
+def get_paest_application(backend, throttler):
     # Build the matcher.
     # /<paest id>
     # /<paest id>/
@@ -151,11 +155,10 @@ def main():
     pattern = r"^/?({0}*)/?({0}*)".format("\w")
 
     application = tornado.web.Application([
-        (pattern, PaestServer, {'paestdb':paestdb, 'throttler':throttler}),
+        (pattern, PaestServer, {'paestdb':backend, 'throttler':throttler}),
     ])
+    return application
 
-    application.listen(options.tornado_port)
-    tornado.ioloop.IOLoop.instance().start()
 
 if __name__ == "__main__":
     main()
