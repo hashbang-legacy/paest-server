@@ -23,7 +23,6 @@ class PaestServer(RequestHandler):
     def get(self, p_id, p_key):
         # p_key is not used during get requests
         # pylint: disable=W0613
-        print "SERVER: GET:", p_id, p_key
 
         if self.throttler and self.throttler.reject(self.request):
             raise tornado.web.HTTPError(403)
@@ -54,7 +53,6 @@ class PaestServer(RequestHandler):
         self.set_header("Content-Type", responder.content_type())
 
         content = self.get_post_content()
-        print "SERVER: POST:", content, p_id, p_key
         if not content:  # Empty paest, treat as delete
             if not self.paestdb.delete_paest(p_id, p_key):
                 self.write(responder.bad_id_or_key())
