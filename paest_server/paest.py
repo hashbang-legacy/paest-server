@@ -30,7 +30,7 @@ class PaestServer(RequestHandler):
 
         paest = self.paestdb.get_paest(p_id)
         if paest is None:
-            self.write(responder.not_found())
+            raise tornado.web.HTTPError(404, responder.not_found())
         else:
             self.write(responder.raw(paest.content))
 
@@ -62,16 +62,19 @@ class PaestServer(RequestHandler):
         else: # We have content, it's a create/update
 
             paest = None
+            updated = False
             if p_key:
                 # paest updated.
-                paest = self.paestdb.update_paest(p_id, p_key, content)
-            else:
+                updated = self.paestdb.update_paest(p_id, p_key, content)
+
+            if not updated: # Wasn't an update, or at least failed to update
+                # Implement the update_or_create logic
                 paest = self.paestdb.create_paest(p_id, p_key, content)
                 if paest:
                     p_id = paest.pid
                     p_key = paest.key
 
-            if paest:
+            if paest or updated: # Create or update succeded
                 self.write(responder.paest_links(p_id, p_key))
             else:
                 self.write(responder.paest_failed())
@@ -152,8 +155,7 @@ def get_paest_application(backend, throttler):
     # /<paest id>
     # /<paest id>/
     # /<paest id>/<paest key>
-    pattern = r"^/?({0}*)/?({0}*)".format("\w")
-
+    pattern = r"^/?({0}*)/?({0}*).*".format("\w")
     application = tornado.web.Application([
         (pattern, PaestServer, {'paestdb':backend, 'throttler':throttler}),
     ])

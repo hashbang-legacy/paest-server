@@ -108,5 +108,5 @@ class Response:
                     "{web_pub}#WEB-PUBLIC\n"
                     "{web_pri}#WEB-PRIVATE\n").format(**urls)
         else:
-            return self.fmt.format(self, **urls)
+            return self.fmt.format(**urls)
 
