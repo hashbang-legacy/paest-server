@@ -2,84 +2,7 @@
 import tornado.ioloop
 from tornado.options import define, options
 from tornado.web import RequestHandler
-from json import dumps
-
-class Response:
-    """ Resource for the paest responses """
-    def __init__(self):
-        pass
-
-    @staticmethod
-    def _format(fmt, **args):
-        """ Format the error messages to json or raw """
-        if fmt == ".json":
-            return dumps(args)
-        elif fmt.startswith("jsonp"):
-            return "{}({})".format(fmt.split("=")[1], dumps(args))
-        else:
-            # Raw formats should have exactly 1 arg
-            assert(len(args)==1)
-            return args.values()[0]
-
-    @staticmethod
-    def content_type(rtype):
-        """ Paest was not found in backend """
-        if rtype == ".json":
-            return "application/json"
-        elif rtype.startswith("jsonp"):
-            return "application/javascript"
-        return "text/plain"
-
-    @staticmethod
-    def not_found(rtype):
-        """ Paest was not found in backend """
-        return Response._format(rtype, e="paest not found")
-
-    @staticmethod
-    def invalid_post(rtype):
-        """ POST content was invalid """
-        return Response._format(rtype, e="invalid post")
-
-    @staticmethod
-    def bad_id_or_key(rtype):
-        """ Returning a raw block of data """
-        return Response._format(rtype, e="bad id or key")
-
-    @staticmethod
-    def paest_deleted(rtype):
-        """ Returning a raw block of data """
-        return Response._format(rtype, e="paest deleted")
-
-    @staticmethod
-    def raw(rtype, data):
-        """ Returning a raw block of data """
-        return Response._format(rtype, d=data)
-
-    @staticmethod
-    def paest_failed(rtype):
-        """ Creating a paest failed. """
-        return Response._format(rtype, e="Paest Failed")
-
-    @staticmethod
-    def paest_links(rtype, p_id, p_key):
-        """ Response for update/create calls """
-        # Using **, I could probably fix this, but I don't wanna!
-        # pylint: disable=W0142
-        urls = {
-            "web_pub": "http://pae.st/{}".format(p_id),
-            "web_pri": "http://pae.st/{}/{}".format(p_id, p_key),
-            "cli_pub": "http://a.pae.st/{}".format(p_id),
-            "cli_pri": "http://a.pae.st/{}/{}".format(p_id, p_key)
-        }
-
-        if rtype != "":
-            return Response._format(rtype, **urls)
-        else:
-            return ("#Fragments(#) not required in url:\n"
-                    "{cli_pub}#CLI-PUBLIC\n"
-                    "{cli_pri}#CLI-PRIVATE\n"
-                    "{web_pub}#WEB-PUBLIC\n"
-                    "{web_pri}#WEB-PRIVATE\n").format(**urls)
+from response import Response
 
 class PaestServer(RequestHandler):
     """ Paest request handler """
@@ -96,43 +19,45 @@ class PaestServer(RequestHandler):
         self.throttler = throttler
         self.put = self.post
 
-    def get(self, p_id, p_key, rtype):
+    def get(self, p_id, p_key):
         # p_key is not used during get requests
         # pylint: disable=W0613
         if self.throttler and self.throttler.reject(self.request):
             raise tornado.web.HTTPError(403)
-        if self.request.query.startswith("jsonp="):
-            rtype = self.request.query
 
-        self.set_header("Content-Type", Response.content_type(rtype))
+        responder = Response(self.request)
+        self.set_header("Content-Type", responder.content_type())
+
         paest = self.paestdb.get_paest(p_id)
         if paest is None:
-            self.write(Response.not_found(rtype))
+            self.write(responder.not_found())
         else:
-            self.write(Response.raw(rtype, paest.content))
+            self.write(responder.raw(paest.content))
 
-    def post(self, p_id, p_key, rtype):
-        if self.throttler and self.throttler.reject(self.request):
-            raise tornado.web.HTTPError(403)
-        if self.request.query.startswith("jsonp="):
-            rtype = self.request.query
-        self.set_header("Content-Type", Response.content_type(rtype))
-
+    def get_post_content(self):
+        """Figure out the content of a post
+        possibly a file, or an arg """
         content = ""
         if len(self.request.arguments.keys()) == 1:
             content = self.request.arguments.values()[0][0]
         elif len(self.request.files.keys()) == 1:
             content = self.request.files.values()[0][0]['body']
-        else:
-            self.write(Response.invalid_post(rtype))
-            return
+        return content
 
+    def post(self, p_id, p_key):
+        if self.throttler and self.throttler.reject(self.request):
+            raise tornado.web.HTTPError(403)
+
+        responder = Response(self.request)
+        self.set_header("Content-Type", responder.content_type())
+
+        content = self.get_post_content()
 
         if not content: # Empty paest, treat as delete
-            if self.paestdb.delete_paest(p_id, p_key):
-                self.write(Response.bad_id_or_key(rtype))
+            if not self.paestdb.delete_paest(p_id, p_key):
+                self.write(responder.bad_id_or_key())
             else:
-                self.write(Response.paest_deleted(rtype))
+                self.write(responder.paest_deleted())
             return
         else: # We have content, it's a create/update
 
@@ -147,9 +72,9 @@ class PaestServer(RequestHandler):
                     p_key = paest.key
 
             if paest:
-                self.write(Response.paest_links(rtype, p_id, p_key))
+                self.write(responder.paest_links(p_id, p_key))
             else:
-                self.write(Response.paest_failed(rtype))
+                self.write(responder.paest_failed())
 
 def setup_options():
     """ Set up all of the flags for paest (and possible backends) """
@@ -223,7 +148,7 @@ def main():
     # /<paest id>
     # /<paest id>/
     # /<paest id>/<paest key>
-    pattern = r"^/?({0}*)/?({0}*)(\.json|)".format("\w")
+    pattern = r"^/?({0}*)/?({0}*)".format("\w")
 
     application = tornado.web.Application([
         (pattern, PaestServer, {'paestdb':paestdb, 'throttler':throttler}),
