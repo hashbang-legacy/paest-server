@@ -3,8 +3,7 @@ from . import PaestDB, Paest
 import logging
 logging.basicConfig(level=logging.DEBUG)
 LOG = logging
-#LOG = logging.getLogger("TestDB")
-#LOG.setLevel(logging.DEBUG)
+
 
 class TestDB(PaestDB):
     """ A Testing implementation of a paest backend """
@@ -49,4 +48,3 @@ class TestDB(PaestDB):
             del self.backend[pid]
             return True
         return False
-

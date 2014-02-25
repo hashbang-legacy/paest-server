@@ -2,7 +2,7 @@
 
 class Paest(object):
     """ Paest structure for modeling individual paests. """
-    __slots__ = ("pid", "key", "content")
+    #__slots__ = ("pid", "key", "content")
     def __init__(self, pid="", key="", content=""):
         self.pid = pid
         self.key = key

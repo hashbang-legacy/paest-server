@@ -2,20 +2,23 @@
 import redis
 import time
 from . import Throttler
+
+
 class RedisThrottler(Throttler):
     """ A PaestThrottler implemented in redis """
 
     def __init__(self, *args, **kwargs):
         super(RedisThrottler, self).__init__()
-        self.max_interactions = 10 # 10 interactions
-        self.window_size = 10 # per 10 second
+        # 10 interactions per 10 seconds
+        self.max_interactions = 10
+        self.window_size = 10
         self.client = redis.StrictRedis(*args, **kwargs)
 
     def reject(self, request):
         """ asf"""
-        uid = request.headers.get('User-Agent', '') +\
-              request.remote_ip +\
-              str(int(time.time()/self.window_size))
+        uid = ''.join([request.headers.get('User-Agent', ''),
+                       request.remote_ip,
+                       str(int(time.time()/self.window_size))])
 
         redis_key = "throttler:{}".format(hash(uid))
 
@@ -24,4 +27,3 @@ class RedisThrottler(Throttler):
             self.client.expire(redis_key, self.window_size)
 
         return val > self.max_interactions
-

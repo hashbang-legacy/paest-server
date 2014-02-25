@@ -1,6 +1,7 @@
 """ Responses for paest server requests """
 from json import dumps
 
+
 class Format(object):
     """ Base class for various output formats"""
 
@@ -11,6 +12,7 @@ class Format(object):
     def content_type(self):
         """ Content-Type header value"""
         raise NotImplementedError()
+
 
 class Plain(Format):
     """ Plain text response format """
@@ -23,6 +25,7 @@ class Plain(Format):
         """ Content type for the plain text output """
         return "text/plain"
 
+
 class Json(Format):
     """ Json response format """
     def format(self, **arg_dict):
@@ -32,6 +35,7 @@ class Json(Format):
     def content_type(self):
         """ Content type for a json output"""
         return "application/json"
+
 
 class Jsonp(Json):
     """ Jsonp response format """
@@ -51,10 +55,11 @@ class Jsonp(Json):
         """ Content type for jsonp """
         return "application/javascript"
 
+
 class Response:
     """ Resource for the paest responses """
     def __init__(self, request):
-        if request.arguments.has_key("callback"):
+        if "callback" in request.arguments:
             fmt = Jsonp(request.arguments["callback"][0])
         elif request.path.endswith(".json"):
             fmt = Json()
@@ -109,4 +114,3 @@ class Response:
                     "{web_pri}#WEB-PRIVATE\n").format(**urls)
         else:
             return self.fmt.format(**urls)
-

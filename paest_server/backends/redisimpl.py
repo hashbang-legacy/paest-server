@@ -2,14 +2,16 @@
 import random
 import redis
 from . import PaestDB, Paest
-_WEEK = 7 * 24 * 60 * 60 # 1 Week in seconds
 
-# Base 58 utils
+_WEEK = 7 * 24 * 60 * 60  # 1 Week in seconds
 BASE58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+
+
 def random58(length):
     """ Construct a random BASE58 string the given length """
     chars = [random.choice(BASE58) for _ in xrange(length)]
     return "".join(chars)
+
 
 class RedisDB(PaestDB):
     """ A PaestDB that uses Redis as the backing implementation """
@@ -35,7 +37,7 @@ class RedisDB(PaestDB):
         return content.split(":", 1)
 
     def create_paest(self, p_id, p_key, content):
-
+        """ Create a paest on the server. Alters p_id or p_key if necessary"""
         # Validate the key
         if not p_key:
             p_key = random58(20)
@@ -49,12 +51,12 @@ class RedisDB(PaestDB):
         if (not p_id) or self.get_paest(p_id):
             # Find a new id for them.
             for length in xrange(10):
-                p_id = random58(length) # Try a paestid of length 1, then 2, etc
+                p_id = random58(length)  # Try a paestid of length 1, then 2...
                 paest = self.get_paest(p_id)
                 if not paest:
                     # Found an unused id. Use it
                     break
-            else: # We didn't break. That means no luck on a paest id
+            else:  # We didn't break. That means no luck on a paest id
                 return None
 
         # If we get here, we have an unused p_id and a valid p_key!
@@ -63,6 +65,7 @@ class RedisDB(PaestDB):
         return Paest(p_id, p_key, content)
 
     def get_paest(self, pid):
+        """ Return a paest from the server. Or return None """
         entry = self.client.get(self.redis_id(pid))
         if entry is None:
             return None
@@ -71,6 +74,7 @@ class RedisDB(PaestDB):
         return Paest(pid, key, content)
 
     def update_paest(self, pid, key, content):
+        """ Update a paest on the redis server. or fail"""
         paest = self.get_paest(pid)
 
         if paest is None or paest.key != key:
@@ -81,6 +85,7 @@ class RedisDB(PaestDB):
         return True
 
     def delete_paest(self, pid, key):
+        """ Remove a paest from the redis server """
         paest = self.get_paest(pid)
 
         if paest is None or paest.key != key:
@@ -88,5 +93,3 @@ class RedisDB(PaestDB):
 
         self.client.delete(self.redis_id(pid))
         return True
-
-
