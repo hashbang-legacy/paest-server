@@ -34,7 +34,7 @@ class PaestServer(RequestHandler):
         if paest is None:
             raise tornado.web.HTTPError(404, responder.not_found())
         else:
-            self.write(responder.raw(paest.content))
+            raise tornado.web.HTTPError(200, responder.raw(paest.content))
 
     def get_post_content(self):
         """Figure out the content of a post
@@ -55,10 +55,9 @@ class PaestServer(RequestHandler):
         content = self.get_post_content()
         if not content:  # Empty paest, treat as delete
             if not self.paestdb.delete_paest(p_id, p_key):
-                self.write(responder.bad_id_or_key())
+                raise tornado.web.HTTPError(401, responder.bad_id_or_key())
             else:
-                self.write(responder.paest_deleted())
-            return
+                raise tornado.web.HTTPError(200, responder.paest_deleted())
         else:  # We have content, it's a create/update
 
             paest = None
@@ -75,9 +74,10 @@ class PaestServer(RequestHandler):
                     p_key = paest.key
 
             if paest or updated:  # Create or update succeded
-                self.write(responder.paest_links(p_id, p_key))
+                raise tornado.web.HTTPError(200,
+                                            responder.paest_links(p_id, p_key))
             else:
-                self.write(responder.paest_failed())
+                raise tornado.web.HTTPError(400, responder.paest_failed())
 
 
 def setup_options():
