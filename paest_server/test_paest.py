@@ -10,38 +10,28 @@ from testutils.WebClient import WebClient
 import json
 import re
 from urllib2 import HTTPError
-class TestPaestServer:
-    def __init__(self, backend, throttler):
-        self.application = paest.get_paest_application(backend, throttler)
-
-    def setup(self):
+class PaestTestCase(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        application = paest.get_paest_application(TestDB(), None)
         sock, port = tornado.testing.bind_unused_port()
-        self.loop = tornado.ioloop.IOLoop.instance()
-        server = tornado.httpserver.HTTPServer(self.application,
-                                               io_loop=self.loop)
+        cls.loop = tornado.ioloop.IOLoop.instance()
+        server = tornado.httpserver.HTTPServer(application,
+                                               io_loop=cls.loop)
         server.add_sockets([sock])
         server.start()
-        self.port = port
-        thread.start_new_thread(self.loop.start,())
+        cls.port = port
+        thread.start_new_thread(cls.loop.start,())
 
-    def teardown(self):
-        self.loop.stop()
+    @classmethod
+    def tearDownClass(cls):
+        cls.loop.stop()
 
 
 
-class E2ETest(unittest.TestCase):
+class E2ETest(PaestTestCase):
     def setUp(self):
-        print "Setup"
-        self.tornado = TestPaestServer(
-            TestDB(),
-            None # throttling
-        )
-        self.tornado.setup()
-        self.url = "http://localhost:{}/".format(self.tornado.port)
-
-    def tearDown(self):
-        print "teardown"
-        self.tornado.teardown()
+        self.url = "http://localhost:{}/".format(self.port)
 
     def test_no_paest_found(self):
         self.assertRaises(HTTPError, WebClient.GET,
