@@ -66,14 +66,14 @@ class Response:
         else:
             fmt = Plain()
         self.fmt = fmt
-
     def content_type(self):
-        """ Content type to set on the response """
         return self.fmt.content_type()
+    def throttled(self, response):
 
+        return 403, self.fmt.format(e="Requesting too fast")
     def not_found(self):
         """ Paest was not found in backend """
-        return self.fmt.format(e="paest not found")
+        return 404, self.fmt.format(e="paest not found")
 
     def invalid_post(self):
         """ POST content was invalid """
@@ -89,7 +89,7 @@ class Response:
 
     def raw(self, data):
         """ Returning a raw block of data """
-        return self.fmt.format(d=data)
+        return 200, self.fmt.format(d=data)
 
     def paest_failed(self):
         """ Creating a paest failed. """
@@ -114,3 +114,32 @@ class Response:
                     "{web_pri}#WEB-PRIVATE\n").format(**urls)
         else:
             return self.fmt.format(**urls)
+
+class Responder(object):
+    def __init__(self, req_handler):
+        self.request_handler = req_handler
+
+        # Figure out which response format to use
+        request = req_handler.request
+        if "callback" in request.arguments:
+            fmt = Jsonp(request.arguments["callback"][0])
+        elif request.path.endswith(".json"):
+            fmt = Json()
+        else:
+            fmt = Plain()
+        self.fmt = fmt
+
+        req_handler.set_header("Content-Type", fmt.content_type())
+
+    # Errors
+    def throttled(self):
+        self.request_handler.set_status(403, "Requesting too fast")
+
+    def not_found(self):
+        self.request_handler.set_status(404, "Paest not found")
+
+    # Non errors
+    def raw(self, content):
+        self.request_handler.write(self.fmt.format(d=content))
+
+

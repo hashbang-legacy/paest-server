@@ -2,7 +2,7 @@
 import tornado.ioloop
 from tornado.options import define, options
 from tornado.web import RequestHandler
-from response import Response
+from response import Response, Responder
 
 
 class PaestServer(RequestHandler):
@@ -23,18 +23,16 @@ class PaestServer(RequestHandler):
     def get(self, p_id, p_key):
         # p_key is not used during get requests
         # pylint: disable=W0613
-
+        responder = Responder(self)
         if self.throttler and self.throttler.reject(self.request):
-            raise tornado.web.HTTPError(403)
-
-        responder = Response(self.request)
-        self.set_header("Content-Type", responder.content_type())
+            return responder.throttled()
 
         paest = self.paestdb.get_paest(p_id)
+
         if paest is None:
-            raise tornado.web.HTTPError(404, responder.not_found())
+            return responder.not_found()
         else:
-            raise tornado.web.HTTPError(200, responder.raw(paest.content))
+            return responder.raw(paest.content)
 
     def get_post_content(self):
         """Figure out the content of a post
