@@ -1,7 +1,7 @@
 """ Responses for paest server requests """
 from json import dumps
 
-
+# Formatters
 class Format(object):
     """ Base class for various output formats"""
 
@@ -56,90 +56,62 @@ class Jsonp(Json):
         return "application/javascript"
 
 
-class Response:
-    """ Resource for the paest responses """
-    def __init__(self, request):
-        if "callback" in request.arguments:
-            fmt = Jsonp(request.arguments["callback"][0])
-        elif request.path.endswith(".json"):
-            fmt = Json()
+def __get_formatter(request):
+    if "callback" in request.arguments:
+        fmt = Jsonp(request.arguments["callback"][0])
+    elif request.path.endswith(".json"):
+        fmt = Json()
+    else:
+        fmt = Plain()
+    return fmt
+
+def __simple_handler(status=200, message=""):
+    def responder(handler):
+        fmt = __get_formatter(handler.request)
+        handler.set_status(status)
+        handler.set_header("Content-Type", fmt.content_type())
+        args = {}
+        if status != 200:
+            args['e'] = message # error
         else:
-            fmt = Plain()
-        self.fmt = fmt
-    def content_type(self):
-        return self.fmt.content_type()
-    def throttled(self, response):
+            args['d'] = message # data, should these just all be 'd'?
 
-        return 403, self.fmt.format(e="Requesting too fast")
-    def not_found(self):
-        """ Paest was not found in backend """
-        return 404, self.fmt.format(e="paest not found")
+        handler.write(fmt.format(**args))
+    return responder
 
-    def invalid_post(self):
-        """ POST content was invalid """
-        return self.fmt.format(e="invalid post")
+# Simple responses
+throttled = __simple_handler(403, "Requesting too fast")
+not_found = __simple_handler(404, "Paest not found")
+bad_id_or_key = __simple_handler(401, "Bad id or key")
+paest_deleted = __simple_handler(200, "Paest deleted.")
+paest_failed = __simple_handler(400, "Paest failed.")
 
-    def bad_id_or_key(self):
-        """ Returning a raw block of data """
-        return self.fmt.format(e="bad id or key")
+# Not so simple responses
+def raw(handler, content):
+    fmt = __get_formatter(handler.request)
+    handler.set_header("Content-Type", fmt.content_type())
+    handler.write(fmt.format(d=content))
 
-    def paest_deleted(self):
-        """ Returning a raw block of data """
-        return self.fmt.format(e="paest deleted")
+def paest_links(handler, p_id, p_key):
+    """ Response for update/create calls """
+    fmt = __get_formatter(handler.request)
+    handler.set_header("Content-Type", fmt.content_type())
+    # Using **, I could probably fix this, but I don't wanna!
+    # pylint: disable=W0142
+    urls = {
+        "web_pub": "http://pae.st/{}".format(p_id),
+        "web_pri": "http://pae.st/{}/{}".format(p_id, p_key),
+        "cli_pub": "http://a.pae.st/{}".format(p_id),
+        "cli_pri": "http://a.pae.st/{}/{}".format(p_id, p_key)
+    }
 
-    def raw(self, data):
-        """ Returning a raw block of data """
-        return 200, self.fmt.format(d=data)
+    if isinstance(fmt, Plain):
+        out = ("#Fragments(#) not required in url:\n"
+               "{cli_pub}#CLI-PUBLIC\n"
+               "{cli_pri}#CLI-PRIVATE\n"
+               "{web_pub}#WEB-PUBLIC\n"
+               "{web_pri}#WEB-PRIVATE\n").format(**urls)
+    else:
+         out = fmt.format(**urls)
 
-    def paest_failed(self):
-        """ Creating a paest failed. """
-        return self.fmt.format(e="Paest Failed")
-
-    def paest_links(self, p_id, p_key):
-        """ Response for update/create calls """
-        # Using **, I could probably fix this, but I don't wanna!
-        # pylint: disable=W0142
-        urls = {
-            "web_pub": "http://pae.st/{}".format(p_id),
-            "web_pri": "http://pae.st/{}/{}".format(p_id, p_key),
-            "cli_pub": "http://a.pae.st/{}".format(p_id),
-            "cli_pri": "http://a.pae.st/{}/{}".format(p_id, p_key)
-        }
-
-        if isinstance(self.fmt, Plain):
-            return ("#Fragments(#) not required in url:\n"
-                    "{cli_pub}#CLI-PUBLIC\n"
-                    "{cli_pri}#CLI-PRIVATE\n"
-                    "{web_pub}#WEB-PUBLIC\n"
-                    "{web_pri}#WEB-PRIVATE\n").format(**urls)
-        else:
-            return self.fmt.format(**urls)
-
-class Responder(object):
-    def __init__(self, req_handler):
-        self.request_handler = req_handler
-
-        # Figure out which response format to use
-        request = req_handler.request
-        if "callback" in request.arguments:
-            fmt = Jsonp(request.arguments["callback"][0])
-        elif request.path.endswith(".json"):
-            fmt = Json()
-        else:
-            fmt = Plain()
-        self.fmt = fmt
-
-        req_handler.set_header("Content-Type", fmt.content_type())
-
-    # Errors
-    def throttled(self):
-        self.request_handler.set_status(403, "Requesting too fast")
-
-    def not_found(self):
-        self.request_handler.set_status(404, "Paest not found")
-
-    # Non errors
-    def raw(self, content):
-        self.request_handler.write(self.fmt.format(d=content))
-
-
+    handler.write(fmt.format(d=out))

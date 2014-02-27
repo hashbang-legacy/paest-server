@@ -2,8 +2,7 @@
 import tornado.ioloop
 from tornado.options import define, options
 from tornado.web import RequestHandler
-from response import Response, Responder
-
+import response
 
 class PaestServer(RequestHandler):
     """ Paest request handler """
@@ -23,16 +22,15 @@ class PaestServer(RequestHandler):
     def get(self, p_id, p_key):
         # p_key is not used during get requests
         # pylint: disable=W0613
-        responder = Responder(self)
         if self.throttler and self.throttler.reject(self.request):
-            return responder.throttled()
+            return response.throttled(self)
 
         paest = self.paestdb.get_paest(p_id)
 
         if paest is None:
-            return responder.not_found()
+            return response.not_found(self)
         else:
-            return responder.raw(paest.content)
+            return response.raw(self, paest.content)
 
     def get_post_content(self):
         """Figure out the content of a post
@@ -46,16 +44,14 @@ class PaestServer(RequestHandler):
 
     def post(self, p_id, p_key):
         if self.throttler and self.throttler.reject(self.request):
-            raise tornado.web.HTTPError(403)
-        responder = Response(self.request)
-        self.set_header("Content-Type", responder.content_type())
+            return response.throttled(self)
 
         content = self.get_post_content()
         if not content:  # Empty paest, treat as delete
             if not self.paestdb.delete_paest(p_id, p_key):
-                raise tornado.web.HTTPError(401, responder.bad_id_or_key())
+                return response.bad_id_or_key(self)
             else:
-                raise tornado.web.HTTPError(200, responder.paest_deleted())
+                return response.paest_deleted(self)
         else:  # We have content, it's a create/update
 
             paest = None
@@ -72,10 +68,9 @@ class PaestServer(RequestHandler):
                     p_key = paest.key
 
             if paest or updated:  # Create or update succeded
-                raise tornado.web.HTTPError(200,
-                                            responder.paest_links(p_id, p_key))
+                return response.paest_links(self, p_id, p_key)
             else:
-                raise tornado.web.HTTPError(400, responder.paest_failed())
+                return response.paest_failed(self)
 
 
 def setup_options():
