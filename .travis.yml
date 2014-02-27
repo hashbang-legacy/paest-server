@@ -3,3 +3,13 @@ python:
   - "2.7"
 install: "pip install -r requirements.txt"
 script: python -m unittest discover
+notifications:
+  email:
+    recipients:
+      - theepicsnail@gmail.com
+  irc:
+    channels:
+      - "udderweb.com:7777#paest"
+    template:
+      - "%{author}, %{message}. %{compare_url}"
+      - "Build details: %{build_url}"
