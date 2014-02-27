@@ -6,7 +6,7 @@ import tornado.web
 import tornado.testing
 from paest_server import paest
 from paest_server.backends.testimpl import TestDB
-from WebClient import WebClient
+from testutils.WebClient import WebClient
 import json
 import re
 from urllib2 import HTTPError
