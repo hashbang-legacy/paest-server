@@ -103,7 +103,9 @@ def paest_links(handler, p_id, p_key):
         "web_pub": "http://pae.st/{}".format(p_id),
         "web_pri": "http://pae.st/{}/{}".format(p_id, p_key),
         "cli_pub": "http://a.pae.st/{}".format(p_id),
-        "cli_pri": "http://a.pae.st/{}/{}".format(p_id, p_key)
+        "cli_pri": "http://a.pae.st/{}/{}".format(p_id, p_key),
+        "pid": p_id,
+        "key": p_key
     }
 
     if isinstance(fmt, Plain):
