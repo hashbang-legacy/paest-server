@@ -1,2 +1,4 @@
 redis==2.9.1
 tornado==3.2
+tornado-cors==0.4.0
+

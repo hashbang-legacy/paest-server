@@ -2,14 +2,17 @@
 import tornado.ioloop
 from tornado.options import define, options
 from tornado.web import RequestHandler
+from tornado_cors import CorsMixin
 import response
 import json
 
-class PaestServer(RequestHandler):
+class PaestServer(CorsMixin, RequestHandler):
     """ Paest request handler """
-
-    def set_default_headers(self):
-        self.set_header("Access-Control-Allow-Origin", "*")
+    CORS_ORIGIN = "*"
+    CORS_HEADERS = ("Content-Type, Depth, User-Agent,"
+                    "X-File-Size, X-Requested-With, X-Requested-By, "
+                    "If-Modified-Since, X-File-Name, Cache-Control")
+    CORS_CREDENTIALS = True
 
     # Tornado uses argument unpacking
     # pylint: disable=W0221
