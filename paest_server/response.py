@@ -114,7 +114,7 @@ def paest_links(handler, p_id, p_key):
                "{cli_pri}#CLI-PRIVATE\n"
                "{web_pub}#WEB-PUBLIC\n"
                "{web_pri}#WEB-PRIVATE\n").format(**urls)
+        handler.write(fmt.format(d=out))
     else:
-         out = urls
+        handler.write(fmt.format(p=p_id, k=p_key))
 
-    handler.write(fmt.format(d=out))
