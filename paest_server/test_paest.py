@@ -54,6 +54,35 @@ class E2ETest(PaestTestCase):
 
         self.assertEqual(content, WebClient.GET(self.url +"pid"))
 
+    def test_json_CRUD(self):
+        content = "TestContent"
+        content2 = "Other content"
+
+        # Create a paest
+        json_output = WebClient.POST_JSON(self.url, {"d": content})
+
+        data = json.loads(json_output)['d']
+
+        self.assertIn("pid", data)
+        self.assertIn("key", data)
+
+        pid = data["pid"]
+        key = data["key"]
+
+        # get the paest content (raw) for json append ".json"
+        self.assertEqual(content, WebClient.GET(self.url + pid))
+
+        # Update
+        WebClient.POST_JSON(self.url + pid + "/" + key, {"d": content2})
+
+        # Check that the update worked
+        self.assertEqual(content2, WebClient.GET(self.url + pid))
+
+        # Check that deleting (posting empty content) works
+        WebClient.POST_JSON(self.url + pid + "/" + key, {"d": ""})
+
+        self.assertRaises(HTTPError, WebClient.GET, self.url + pid)
+
     def test_cli_CRUD(self):
         content = "TestContent"
         content2 = "Other content"
