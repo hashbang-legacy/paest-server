@@ -3,6 +3,7 @@ import tornado.ioloop
 from tornado.options import define, options
 from tornado.web import RequestHandler
 import response
+import json
 
 class PaestServer(RequestHandler):
     """ Paest request handler """
@@ -40,6 +41,8 @@ class PaestServer(RequestHandler):
             content = self.request.arguments.values()[0][0]
         elif len(self.request.files.keys()) == 1:
             content = self.request.files.values()[0][0]['body']
+        elif self.request.headers.get("Content-Type","") == "application/json":
+            content = json.loads(self.request.body).get("d","")
         return content
 
     def post(self, p_id, p_key):

@@ -59,7 +59,8 @@ class Jsonp(Json):
 def __get_formatter(request):
     if "callback" in request.arguments:
         fmt = Jsonp(request.arguments["callback"][0])
-    elif request.path.endswith(".json"):
+    elif request.path.endswith(".json") or \
+        request.headers.get("Content-Type","") == "application/json":
         fmt = Json()
     else:
         fmt = Plain()
