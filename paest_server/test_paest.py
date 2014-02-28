@@ -61,13 +61,13 @@ class E2ETest(PaestTestCase):
         # Create a paest
         json_output = WebClient.POST_JSON(self.url, {"d": content})
 
-        data = json.loads(json_output)['d']
+        data = json.loads(json_output)
 
-        self.assertIn("pid", data)
-        self.assertIn("key", data)
+        self.assertIn("p", data)
+        self.assertIn("k", data)
 
-        pid = data["pid"]
-        key = data["key"]
+        pid = data["p"]
+        key = data["k"]
 
         # get the paest content (raw) for json append ".json"
         self.assertEqual(content, WebClient.GET(self.url + pid))
