@@ -53,12 +53,12 @@ class PaestServer(CorsMixin, RequestHandler):
             return response.throttled(self)
 
         content = self.get_post_content()
-        if not content:  # Empty paest, treat as delete
+        if not content and p_key:  # Looks like a delete
             if not self.paestdb.delete_paest(p_id, p_key):
                 return response.bad_id_or_key(self)
             else:
                 return response.paest_deleted(self)
-        else:  # We have content, it's a create/update
+        else:  # Not a delete, try create/update
 
             paest = None
             updated = False

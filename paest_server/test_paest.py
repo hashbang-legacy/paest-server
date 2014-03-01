@@ -43,6 +43,27 @@ class E2ETest(PaestTestCase):
         self.assertRaises(HTTPError, WebClient.GET,
             (self.url + "MissingKey?callback=cb"))
 
+    def test_empty_create_vs_delete(self):
+        # Empty post to pae.st/ should return a paest
+        urls = json.loads( WebClient.POST_JSON( self.url, {"d":""}))
+        self.assertIn("p", urls)
+        self.assertIn("k", urls)
+
+        # Empty post to pae.st/foo should return a paest
+        specific_id = "test_empty_create_vs_delete"
+        urls2 = json.loads( WebClient.POST_JSON( self.url + specific_id,
+                                                {"d":""}))
+        self.assertIn("p", urls2)
+        self.assertEqual(specific_id, urls2["p"])
+
+        # Empty post to pae.st/foo/bar should delete a paest
+        WebClient.GET(self.url + urls["p"])
+        WebClient.POST_JSON("{}{}/{}".format(self.url, urls["p"], urls["k"]),
+                            {"d":""})
+
+        self.assertRaises(HTTPError, WebClient.GET, self.url + urls["p"])
+
+
     def test_invalid_key_prevents_update(self):
         content = "TestContent"
         content2 = "Other content"
