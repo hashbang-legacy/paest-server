@@ -5,10 +5,10 @@ import subprocess
 import time
 
 # Find redis-server binary. There should be a better way to do this.
-TEST_REDIS_BIN = subprocess.check_output(["locate", "/redis-server"]).strip()
+REDIS_BIN = subprocess.check_output(["whereis", "redis-server"]).split()[1]
 class RedisServer(object):
     def __init__(self, port):
-        self.process = subprocess.Popen([TEST_REDIS_BIN, "--port", str(port)])
+        self.process = subprocess.Popen([REDIS_BIN, "--port", str(port)])
         time.sleep(.1)
 
     def stop(self):
