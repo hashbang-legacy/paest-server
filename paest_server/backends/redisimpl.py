@@ -81,7 +81,7 @@ class RedisDB(PaestDB):
             return False
 
         self.client.set(self.redis_id(pid), self.serialize(key, content))
-        # self.client.expire(self.redis_id(p_id), self.expire_time)
+        self.client.expire(self.redis_id(p_id), self.expire_time)
         return True
 
     def delete_paest(self, pid, key):
