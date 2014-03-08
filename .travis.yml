@@ -15,3 +15,5 @@ notifications:
     template:
       - "%{author}, %{message}. %{compare_url}"
       - "Build details: %{build_url}"
+    webhooks:
+      - http://udderweb.com:12346/rest/api/travisci
