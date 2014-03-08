@@ -23,10 +23,16 @@ class PaestServer(CorsMixin, RequestHandler):
         self.throttler = throttler
         self.put = self.post
 
+    def request_uid(self):
+        """ Create a unique id for this requester.
+        This is used during throttling """
+        return self.request.headers.get('User-Agent', '') +\
+               self.request.remote_ip
+
     def get(self, p_id, p_key):
         # p_key is not used during get requests
         # pylint: disable=W0613
-        if self.throttler and self.throttler.reject(self.request):
+        if self.throttler and self.throttler.reject(self.request_uid()):
             return response.throttled(self)
 
         paest = self.paestdb.get_paest(p_id)
@@ -49,7 +55,7 @@ class PaestServer(CorsMixin, RequestHandler):
         return content
 
     def post(self, p_id, p_key):
-        if self.throttler and self.throttler.reject(self.request):
+        if self.throttler and self.throttler.reject(self.request_uid()):
             return response.throttled(self)
 
         content = self.get_post_content()

@@ -14,11 +14,9 @@ class RedisThrottler(Throttler):
         self.window_size = 10
         self.client = redis.StrictRedis(*args, **kwargs)
 
-    def reject(self, request):
+    def reject(self, request_uid):
         """ asf"""
-        uid = ''.join([request.headers.get('User-Agent', ''),
-                       request.remote_ip,
-                       str(int(time.time()/self.window_size))])
+        uid = request_uid + str(int(time.time()/self.window_size))
 
         redis_key = "throttler:{}".format(hash(uid))
 
