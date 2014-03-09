@@ -10,9 +10,11 @@ if [ "$1" == "test" ] ; then
   echo "Running tests"
   python -m unittest discover $@
 else if [ "$1" == "supervisord" ] ; then
-  supervisord -c supervisor/supervisord.conf
+  shift
+  supervisord -c supervisor/supervisord.conf $@
 else if [ "$1" == "supervisorctl" ] ; then
-  supervisorctl -c supervisor/supervisord.conf
+  shift
+  supervisorctl -c supervisor/supervisord.conf $@
 else
   echo "Launching paest."
   python paest_server/paest.py $@
