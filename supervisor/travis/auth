@@ -1,0 +1,9 @@
+# This file should contain only the authorized header travisci generates.
+# To set up this file properly, update these three fields:
+OWNER="owner" # e.g. paest
+REPO="repo"   # e.g. paest-server
+TOKEN="token" # https://travis-ci.org/profile/<Your travis account>/profile
+# Then do:
+# bash supervisor/travis/auth
+# The following line will replace this file with the correct content
+echo -n "$OWNER/$REPO$TOKEN" | sha256sum | awk '{printf $1}' > $0
