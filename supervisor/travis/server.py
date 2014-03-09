@@ -85,6 +85,8 @@ def main():
     app = tornado.web.Application([
         ("^$", TravisHandler, {'auth': auth})
     ])
+
+    print "Starting travis listener on port", options.tornado_port
     app.listen(options.tornado_port)
     tornado.ioloop.IOLoop.instance().start()
 
