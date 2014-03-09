@@ -52,14 +52,15 @@ class TravisHandler(RequestHandler):
         content = self.request.body_arguments['payload'][0]
         if not should_reload(json.loads(content)):
             print "Check failed. Not restarting server."
-            return "Not restarted"
+            return
 
         print "Checks passed. Restarting server"
 
-        subprocess.check_output(["git", "pull"])
-        subprocess.check_output(["bash", "run.sh", "supervisorctl",
+        print subprocess.check_output(["git", "pull"])
+        print subprocess.check_output(["bash", "run.sh", "supervisorctl",
                                  "restart", "paest"])
-        return "Restarted"
+        return
+
 def get_travis_auth():
     """ Get the travis ci auth token.
         Returns either None or a string"""
