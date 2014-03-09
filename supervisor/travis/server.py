@@ -15,6 +15,7 @@ define("tornado_port",
 define("auth_file",
     default="supervisor/travis/auth",
     help="File containing travis auth key")
+options.parse_command_line()
 
 def should_reload(payload):
     """ Given a payload from travis, should we reload the server?"""

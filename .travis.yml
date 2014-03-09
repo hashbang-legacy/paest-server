@@ -17,4 +17,5 @@ notifications:
       - "Build details: %{build_url}"
   webhooks:
     urls:
-      - http://udderweb.com:12346/rest/api/travisci
+      # This port should be the same as supervisor/travis.conf
+      - http://udderweb.com:12346/
