@@ -1,10 +1,11 @@
 """ Pae.st server """
+import json
+import response
 import tornado.ioloop
+
+from tornado_cors import CorsMixin
 from tornado.options import define, options
 from tornado.web import RequestHandler
-from tornado_cors import CorsMixin
-import response
-import json
 
 class PaestServer(CorsMixin, RequestHandler):
     """ Paest request handler """
