@@ -57,6 +57,7 @@ class Jsonp(Json):
 
 
 def __get_formatter(request):
+    """ Try to figure out the format that the request is using"""
     if "callback" in request.arguments:
         fmt = Jsonp(request.arguments["callback"][0])
     elif request.path.endswith(".json") or \
@@ -67,20 +68,21 @@ def __get_formatter(request):
     return fmt
 
 def __simple_handler(status=200, message=""):
+    """ Constructs functions for simple http responses """
     def responder(handler):
+        """ Writes out a response status/header/body """
         fmt = __get_formatter(handler.request)
         handler.set_status(status)
         handler.set_header("Content-Type", fmt.content_type())
-        args = {}
         if status != 200:
-            args['e'] = message # error
+            handler.write(fmt.format(e=message))
         else:
-            args['d'] = message # data, should these just all be 'd'?
-
-        handler.write(fmt.format(**args))
+            handler.write(fmt.format(d=message))
     return responder
 
-# Simple responses
+# Simple responses.
+# Poorly formatted names. This needs refactored anyway.
+# pylint: disable=C0103
 throttled = __simple_handler(403, "Requesting too fast")
 not_found = __simple_handler(404, "Paest not found")
 bad_id_or_key = __simple_handler(401, "Bad id or key")
@@ -89,6 +91,7 @@ paest_failed = __simple_handler(400, "Paest failed.")
 
 # Not so simple responses
 def raw(handler, content):
+    """Raw response, used for dumping content into the response"""
     fmt = __get_formatter(handler.request)
     handler.set_header("Content-Type", fmt.content_type())
     handler.write(fmt.format(d=content))
