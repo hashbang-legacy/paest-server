@@ -37,11 +37,12 @@ def should_reload(payload):
 class TravisHandler(RequestHandler):
     """ Handler to listen for travis-ci webhooks"""
 
-    def initialize(self, auth):
+    def initialize(self, auth, callback):
         # Tornado uses initialize instead of __init__
         # pylint: disable=W0201, W0221
         """ Setup the handler to accept requests from the given auth token """
         self.auth_token = auth
+        self.callback = callback
 
     def post(self):
         auth = self.request.headers.get("Authorization", "")
@@ -55,10 +56,8 @@ class TravisHandler(RequestHandler):
             return
 
         print "Checks passed. Restarting server"
+        self.callback()
 
-        print subprocess.check_output(["git", "pull"])
-        print subprocess.check_output(["bash", "run.sh", "supervisorctl",
-                                 "restart", "paest"])
         return
 
 def get_travis_auth():
@@ -74,6 +73,17 @@ def get_travis_auth():
             auth = data
     return auth
 
+def restart():
+    """ Called when we need to update the code and restart servers """
+    print "updating and restarting."
+    # Discard local changes to prevent any chance of merge conflicts
+    # This wont discard your travis/auth file. And any other changes
+    # that you might be worried about, should never have been made
+    # on this instance of the server.
+    print subprocess.check_output(["git", "reset", "--hard", "HEAD"])
+    print subprocess.check_output(["git", "pull"])
+    print subprocess.check_output(["bash", "run.sh", "supervisorctl",
+                                "restart", "all"])
 
 def main():
     """ Setup the server and run it """
@@ -84,7 +94,7 @@ def main():
         return
 
     app = tornado.web.Application([
-        (".*", TravisHandler, {'auth': auth})
+        (".*", TravisHandler, {'auth': auth, 'callback':auth})
     ])
 
     print "Starting travis listener on port", options.tornado_port
