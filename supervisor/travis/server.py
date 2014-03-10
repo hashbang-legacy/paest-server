@@ -63,6 +63,7 @@ class TravisHandler(RequestHandler):
 def get_travis_auth():
     """ Get the travis ci auth token.
         Returns either None or a string"""
+    print "travis:", options.auth_file
     travispath = options.auth_file
     auth = None
     with open(travispath) as travis_file:
@@ -85,18 +86,19 @@ def restart():
     print subprocess.check_output(["bash", "run.sh", "supervisorctl",
                                 "restart", "all"])
 
-def main():
-    """ Setup the server and run it """
-
+def get_app():
     auth = get_travis_auth()
     if auth is None:
         print "Couldn't get auth token."
         return
 
-    app = tornado.web.Application([
-        (".*", TravisHandler, {'auth': auth, 'callback':auth})
+    return tornado.web.Application([
+        (".*", TravisHandler, {'auth': auth, 'callback':restart})
     ])
 
+def main():
+    """ Setup the server and run it """
+    app = get_app()
     print "Starting travis listener on port", options.tornado_port
     app.listen(options.tornado_port)
     tornado.ioloop.IOLoop.instance().start()
