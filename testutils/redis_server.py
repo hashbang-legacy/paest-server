@@ -9,9 +9,10 @@ REDIS_BIN = subprocess.check_output(["whereis", "redis-server"]).split()[1]
 class RedisServer(object):
     def __init__(self, port):
         self.process = subprocess.Popen([REDIS_BIN, "--port", str(port)])
-        time.sleep(.1)
+        #TODO read processes output, wait for the server to actually come up.
+        time.sleep(1)
 
     def stop(self):
         self.process.kill()
-        time.sleep(.1)
+        time.sleep(1)
 
