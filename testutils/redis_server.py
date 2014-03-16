@@ -8,11 +8,18 @@ import time
 REDIS_BIN = subprocess.check_output(["whereis", "redis-server"]).split()[1]
 class RedisServer(object):
     def __init__(self, port):
-        self.process = subprocess.Popen([REDIS_BIN, "--port", str(port)])
-        #TODO read processes output, wait for the server to actually come up.
-        time.sleep(1)
+        self.process = subprocess.Popen([REDIS_BIN, "--port", str(port)],
+                                        stdout=subprocess.PIPE)
+        running = self.waitForStartup()
+
+    def waitForStartup(self):
+        line = self.process.stdout.readline()
+        while line != "":
+            if "The server is now ready" in line:
+                return True
+            line = self.process.stdout.readline()
+        return False
 
     def stop(self):
         self.process.kill()
-        time.sleep(1)
 
