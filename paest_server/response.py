@@ -23,7 +23,7 @@ class Plain(Format):
 
     def content_type(self):
         """ Content type for the plain text output """
-        return "text/plain"
+        return "text/plain; charset=utf-8"
 
 
 class Json(Format):
