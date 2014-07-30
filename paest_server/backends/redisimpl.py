@@ -29,12 +29,12 @@ class RedisDB(PaestDB):
     @staticmethod
     def serialize(key, content):
         """ Searialize a paests key and content to a redis entry """
-        return "{}:{}".format(key, content)
+        return ":".join([key, content]).encode('utf-8')
 
     @staticmethod
     def unserialize(content):
         """ Break a redis entry into the paests key and content """
-        return content.split(":", 1)
+        return content.decode('utf-8').split(":", 1)
 
     def create_paest(self, p_id, p_key, content):
         """ Create a paest on the server. Alters p_id or p_key if necessary"""

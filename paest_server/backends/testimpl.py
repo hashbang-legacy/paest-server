@@ -14,7 +14,7 @@ class TestDB(PaestDB):
         self.backend = {}
 
     def create_paest(self, pid, key, content):
-        LOG.info("create_paest('{}', '{}', '{}')".format(pid, key, content))
+        LOG.info(u"create_paest('{}', '{}', '{}')".format(pid, key, content))
         counter = 0
         if not key:
             key = "DefaultKey"

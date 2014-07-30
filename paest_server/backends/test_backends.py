@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import unittest
 import redisimpl
 import testimpl
@@ -121,6 +123,14 @@ class BackendTests(object):
         self.assertFalse(self.db.delete_paest("badId", paest.key))
         self.assertEqual(content, self.db.get_paest(pid).content)
 
+    def test_handles_unicode(self):
+        pid = "TeUn"
+        content = u" broken        │00:21:01 musegarden | eeeee!    "
+
+        self.db.create_paest(pid, "", content)
+
+        paest = self.db.get_paest(pid)
+        self.assertEqual(content, paest.content)
 
 
 class TestRedisImpl(BackendTests, unittest.TestCase):
