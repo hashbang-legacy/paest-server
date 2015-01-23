@@ -17,7 +17,14 @@ pip install -r requirements.txt
 To run paest-server:
 --------------------
 
-There are two main ways to install and run paest. (And one more developer way)
+There are three main ways to install and run paest. (And one more developer way)
+
+### The docker way:
+
+```bash
+docker run --name redis -d redis
+docker run --name paest-web --link redis:redis hashbang/paest-server
+```
 
 ### The easy way:
 
@@ -29,7 +36,7 @@ Starting paest this way will work just as well as the advanced way, however rest
 # Or, with args
 ./run.sh --tornado_port=1234 --redis_db=1
 
-# To stop paest, simply ctrl-c or kill this process 
+# To stop paest, simply ctrl-c or kill this process
 ```
 
 ### The advanced way:
