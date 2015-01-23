@@ -1,4 +1,4 @@
-paest-server [![Build Status](https://travis-ci.org/paest/paest-server.png)](https://travis-ci.org/paest/paest-server)
+paest-server [![Build Status](https://travis-ci.org/hashbang/paest-server.png)](https://travis-ci.org/hashbang/paest-server)
 ============
 
 This project is the backend for [pae.st](http://pae.st/).
@@ -23,7 +23,7 @@ There are three main ways to install and run paest. (And one more developer way)
 
 ```bash
 docker run --name redis -d redis
-docker run --name paest-web --link redis:redis hashbang/paest-server
+docker run --name paest-web --link redis:redis -p 80:80 hashbang/paest-server
 ```
 
 ### The easy way:
