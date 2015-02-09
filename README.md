@@ -9,7 +9,7 @@ If you run this project on its own you can use [curl](https://github.com/paest/p
 To install paest-server:
 ------------------------
 ```bash
-git clone https://github.com/paest/paest-server.git
+git clone https://github.com/hashbang/paest-server.git
 cd paest-server
 pip install -r requirements.txt
 ```
