@@ -1,0 +1,16 @@
+[Unit]
+Description=Redis Server
+Author=Hashbang Team - team@hashbang.sh
+After=docker.service
+
+[Service]
+Restart=always
+ExecStartPre=/usr/bin/docker pull redis
+ExecStart=/usr/bin/docker run \
+    --name redis \
+    -d \
+    redis
+ExecStop=/usr/bin/docker stop redis
+
+[Install]
+WantedBy=mulit-user.target

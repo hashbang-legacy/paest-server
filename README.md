@@ -23,7 +23,7 @@ There are three main ways to install and run paest. (And one more developer way)
 
 ```bash
 docker run --name redis -d redis
-docker run --name paest-web --link redis:redis -p 80:80 hashbang/paest-server
+docker run --name paest-api --link redis:redis -p 80:80 hashbang/paest-server
 ```
 
 ### The easy way:
