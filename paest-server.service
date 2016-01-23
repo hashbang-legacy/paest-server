@@ -1,15 +1,18 @@
 [Unit]
-Description=Paest API Server
-Author=Hashbang Team - team@hashbang.sh
+Description=#! Paest API Server
 After=redis.service
+Requires=redis.service docker.service
 
 [Service]
 Restart=always
-ExecStartPre=/usr/bin/docker pull hashbang/paest-server
+ExecStartPre=-/usr/bin/docker pull hashbang/paest-server
+ExecStartPre=-/usr/bin/docker kill paest-api
+ExecStartPre=-/usr/bin/docker rm   paest-api
 ExecStart=/usr/bin/docker run \
   --name paest-api \
   --link redis:redis \
-  -d hashbang/paest-server
+  hashbang/paest-server
+
 ExecStop=/usr/bin/docker stop paest-api
 
 [Install]
